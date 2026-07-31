@@ -1,0 +1,14 @@
+[package]
+name = "mixer-ffi"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "mixer_ffi"
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+dsp-engine = { path = "../dsp-engine" }
+
+[build-dependencies]
+cbindgen = "0.27"
