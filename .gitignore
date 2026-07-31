@@ -1,0 +1,16 @@
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Rust
+target/
+Cargo.lock
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.xcuserstate
+
+# macOS
+.DS_Store
