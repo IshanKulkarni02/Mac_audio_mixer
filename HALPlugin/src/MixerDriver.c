@@ -19,9 +19,22 @@
 #include <CoreAudio/AudioServerPlugIn.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach_time.h>
+#include <os/log.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdatomic.h>
+
+/* An unimplemented property makes coreaudiod throw and silently drop the
+   whole device — the only trace is an opaque "Caught exception trying to
+   add device" in its log. Logging every miss with the selector spelled
+   out as a FourCC turns that dead end into a one-line diagnosis.
+   Read with: log stream --predicate 'subsystem == "com.audiomixer.halplugin"' */
+#define MixerLogUnknownProperty(objectName, selector)                                  \
+    os_log_error(OS_LOG_DEFAULT,                                                        \
+        "[com.audiomixer.halplugin] %s: unimplemented property '%c%c%c%c'",             \
+        (objectName),                                                                   \
+        (char)(((selector) >> 24) & 0xFF), (char)(((selector) >> 16) & 0xFF),            \
+        (char)(((selector) >> 8) & 0xFF), (char)((selector) & 0xFF))
 
 #pragma mark - Constants
 
@@ -261,6 +274,7 @@ static OSStatus PlugIn_GetPropertyData(const AudioObjectPropertyAddress *address
             *outDataSize = sizeof(CFStringRef);
             return noErr;
         default:
+            MixerLogUnknownProperty("plugin", address->mSelector);
             return kAudioHardwareUnknownPropertyError;
     }
 }
@@ -291,6 +305,7 @@ static Boolean Device_HasProperty(const AudioObjectPropertyAddress *address) {
         case kAudioDevicePropertyIsHidden:
         case kAudioDevicePropertyPreferredChannelsForStereo:
         case kAudioDevicePropertyPreferredChannelLayout:
+        case kAudioDevicePropertyZeroTimeStampPeriod:
             return true;
         default:
             return false;
@@ -323,6 +338,7 @@ static OSStatus Device_GetPropertyDataSize(const AudioObjectPropertyAddress *add
         case kAudioDevicePropertyIsHidden: *outDataSize = sizeof(UInt32); return noErr;
         case kAudioDevicePropertyPreferredChannelsForStereo: *outDataSize = 2 * sizeof(UInt32); return noErr;
         case kAudioDevicePropertyPreferredChannelLayout: *outDataSize = offsetof(AudioChannelLayout, mChannelDescriptions); return noErr;
+        case kAudioDevicePropertyZeroTimeStampPeriod: *outDataSize = sizeof(UInt32); return noErr;
         default: *outDataSize = 0; return kAudioHardwareUnknownPropertyError;
     }
 }
@@ -377,6 +393,11 @@ static OSStatus Device_GetPropertyData(const AudioObjectPropertyAddress *address
             return noErr;
         case kAudioDevicePropertyIsHidden:
             *(UInt32 *)outData = 0; *outDataSize = sizeof(UInt32); return noErr;
+        case kAudioDevicePropertyZeroTimeStampPeriod:
+            /* Must match the stride GetZeroTimeStamp advances by, or the
+               HAL can't build a sample-time↔host-time mapping and refuses
+               to add the device. */
+            *(UInt32 *)outData = kDevice_RingBufferFrames; *outDataSize = sizeof(UInt32); return noErr;
         case kAudioDevicePropertyPreferredChannelsForStereo:
             if (inDataSize < 2 * sizeof(UInt32)) return kAudioHardwareBadPropertySizeError;
             ((UInt32 *)outData)[0] = 1;
@@ -394,6 +415,7 @@ static OSStatus Device_GetPropertyData(const AudioObjectPropertyAddress *address
             return noErr;
         }
         default:
+            MixerLogUnknownProperty("device", address->mSelector);
             return kAudioHardwareUnknownPropertyError;
     }
 }
@@ -485,6 +507,7 @@ static OSStatus Stream_GetPropertyData(const AudioObjectPropertyAddress *address
             *outDataSize = sizeof(AudioStreamRangedDescription);
             return noErr;
         default:
+            MixerLogUnknownProperty("stream", address->mSelector);
             return kAudioHardwareUnknownPropertyError;
     }
 }

@@ -1,6 +1,8 @@
 BUNDLE = build/AudioMixer.driver
 CC = clang
-CFLAGS = -Wall -Wextra -std=c11 -O2
+# -Wno-unknown-attributes: os_log's own SDK macro expands to an attribute
+# this clang doesn't know; the warning is from Apple's header, not our code.
+CFLAGS = -Wall -Wextra -std=c11 -O2 -Wno-unknown-attributes
 FRAMEWORKS = -framework CoreAudio -framework CoreFoundation
 
 .PHONY: all clean
