@@ -20,7 +20,10 @@ impl Strip {
         }
     }
 
-    fn linear_gain(&self) -> f32 {
+    /// Public so callers across the FFI boundary can read back the gain
+    /// the engine will actually apply — a mute reads 0.0 regardless of
+    /// the dB value, which is exactly what a meter or UI needs to show.
+    pub fn linear_gain(&self) -> f32 {
         if self.muted {
             0.0
         } else {

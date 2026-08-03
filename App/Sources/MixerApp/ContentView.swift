@@ -1,4 +1,5 @@
 import SwiftUI
+import MixerCore
 
 struct ContentView: View {
     @State private var store = MixerStore()

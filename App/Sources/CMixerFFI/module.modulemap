@@ -1,0 +1,4 @@
+module CMixerFFI {
+    header "include/mixer_ffi.h"
+    export *
+}

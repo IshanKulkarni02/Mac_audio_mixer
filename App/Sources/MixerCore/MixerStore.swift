@@ -10,11 +10,11 @@ import Foundation
 /// HALPlugin virtual output is installed and can be selected as a real
 /// Core Audio device.
 @Observable
-final class MixerStore {
-    var inputs: [Strip]
-    var outputs: [Strip]
+public final class MixerStore {
+    public var inputs: [Strip]
+    public var outputs: [Strip]
 
-    init() {
+    public init() {
         inputs = [
             Strip(name: "Microphone", subtitle: "Built-in", kind: .hardwareInput),
             Strip(name: "Virtual In 1", subtitle: "App playback device", kind: .virtualInput),
