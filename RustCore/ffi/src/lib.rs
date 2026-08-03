@@ -38,3 +38,18 @@ pub unsafe extern "C" fn mixer_strip_set_muted(strip: *mut Strip, muted: bool) {
         s.muted = muted;
     }
 }
+
+/// Reads back the linear gain the engine will actually apply, so the UI
+/// can show the real applied value rather than re-deriving the dB→linear
+/// conversion on the Swift side and risking the two drifting apart.
+/// Returns 0.0 for a null pointer.
+///
+/// # Safety
+/// `strip` must be a live pointer from `mixer_strip_create`, or null.
+#[no_mangle]
+pub unsafe extern "C" fn mixer_strip_linear_gain(strip: *const Strip) -> f32 {
+    match strip.as_ref() {
+        Some(s) => s.linear_gain(),
+        None => 0.0,
+    }
+}

@@ -1,4 +1,5 @@
 import SwiftUI
+import MixerCore
 
 struct StripView: View {
     @Bindable var strip: Strip

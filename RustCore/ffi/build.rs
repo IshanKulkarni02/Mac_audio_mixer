@@ -15,4 +15,5 @@ fn main() {
         .write_to_file(format!("{crate_dir}/include/mixer_ffi.h"));
 
     println!("cargo:rerun-if-changed=src/lib.rs");
+    println!("cargo:rerun-if-changed=cbindgen.toml");
 }
